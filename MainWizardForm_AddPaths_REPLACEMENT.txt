@@ -1,0 +1,29 @@
+Replace only the existing AddPaths(...) method in MainWizardForm.cs with this method:
+
+private void AddPaths(IEnumerable<string> paths)
+{
+    foreach (string path in paths)
+    {
+        string extension = Path.GetExtension(path);
+        if (extension.Equals(".log", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_project.ImportedLogFiles.Contains(path, StringComparer.OrdinalIgnoreCase))
+                _project.ImportedLogFiles.Add(path);
+
+            // A directly loaded HYPACK LOG is an organizational entry point.
+            // Resolve and add every referenced RAW file that exists beside or
+            // below the LOG file's survey folder.
+            foreach (string rawPath in HypackLogParser.DiscoverReferencedRawFiles(path))
+            {
+                if (!_project.ImportedRawFiles.Contains(rawPath, StringComparer.OrdinalIgnoreCase))
+                    _project.ImportedRawFiles.Add(rawPath);
+            }
+        }
+        else if (extension.Equals(".raw", StringComparison.OrdinalIgnoreCase) ||
+                 extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_project.ImportedRawFiles.Contains(path, StringComparer.OrdinalIgnoreCase))
+                _project.ImportedRawFiles.Add(path);
+        }
+    }
+}

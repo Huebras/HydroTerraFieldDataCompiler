@@ -15,6 +15,132 @@ public static class HypackLogParser
         "(?i)(?:LNN|LINE(?:NAME)?|SURVEYLINE)\\s*[:=]?\\s*\"?(?<line>[^\",;|\\r\\n]+)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    public static List<string> DiscoverReferencedRawFiles(string logPath)
+    {
+        var discovered = new List<string>();
+        if (string.IsNullOrWhiteSpace(logPath) || !File.Exists(logPath)) return discovered;
+
+        string logDirectory = Path.GetDirectoryName(Path.GetFullPath(logPath)) ?? string.Empty;
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(logPath);
+        }
+        catch
+        {
+            return discovered;
+        }
+
+        var references = new List<string>();
+        foreach (string line in lines)
+        {
+            foreach (Match match in RawReferenceRegex.Matches(line))
+            {
+                string token = match.Groups["quoted"].Success
+                    ? match.Groups["quoted"].Value
+                    : match.Groups["plain"].Value;
+
+                token = token.Trim().Trim('"');
+                if (!string.IsNullOrWhiteSpace(token)) references.Add(token);
+            }
+        }
+
+        if (references.Count == 0) return discovered;
+
+        // Build a filename index once. HYPACK LOG files often contain only a RAW
+        // filename or an old relative path, while the actual data is in a nearby
+        // survey-day subfolder.
+        Dictionary<string, List<string>>? filesByName = null;
+        foreach (string reference in references.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            string normalized = reference.Replace('/', Path.DirectorySeparatorChar)
+                                         .Replace('\\', Path.DirectorySeparatorChar);
+            string? resolved = null;
+
+            try
+            {
+                if (Path.IsPathRooted(normalized) && File.Exists(normalized))
+                {
+                    resolved = Path.GetFullPath(normalized);
+                }
+                else
+                {
+                    string relativeCandidate = Path.GetFullPath(Path.Combine(logDirectory, normalized));
+                    if (File.Exists(relativeCandidate)) resolved = relativeCandidate;
+                }
+            }
+            catch
+            {
+                // Invalid or legacy path text; use the filename fallback below.
+            }
+
+            if (resolved == null)
+            {
+                filesByName ??= BuildRawFileIndex(logDirectory);
+                string fileName = Path.GetFileName(normalized);
+                if (!string.IsNullOrWhiteSpace(fileName) &&
+                    filesByName.TryGetValue(fileName, out List<string>? matches) &&
+                    matches.Count > 0)
+                {
+                    // Prefer the nearest path to the LOG file, then alphabetically
+                    // for deterministic behavior when duplicate names exist.
+                    resolved = matches
+                        .OrderBy(path => RelativeDepth(logDirectory, path))
+                        .ThenBy(path => path, StringComparer.OrdinalIgnoreCase)
+                        .First();
+                }
+            }
+
+            if (resolved != null &&
+                !discovered.Contains(resolved, StringComparer.OrdinalIgnoreCase))
+            {
+                discovered.Add(resolved);
+            }
+        }
+
+        return discovered;
+    }
+
+    private static Dictionary<string, List<string>> BuildRawFileIndex(string rootDirectory)
+    {
+        var index = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(rootDirectory) || !Directory.Exists(rootDirectory)) return index;
+
+        try
+        {
+            foreach (string path in Directory.EnumerateFiles(rootDirectory, "*.raw", SearchOption.AllDirectories))
+            {
+                string name = Path.GetFileName(path);
+                if (!index.TryGetValue(name, out List<string>? paths))
+                {
+                    paths = new List<string>();
+                    index[name] = paths;
+                }
+                paths.Add(Path.GetFullPath(path));
+            }
+        }
+        catch
+        {
+            // Access to one or more folders may be restricted. Directly resolved
+            // references still work even if the fallback index cannot be completed.
+        }
+
+        return index;
+    }
+
+    private static int RelativeDepth(string rootDirectory, string path)
+    {
+        try
+        {
+            string relative = Path.GetRelativePath(rootDirectory, path);
+            return relative.Count(c => c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar);
+        }
+        catch
+        {
+            return int.MaxValue;
+        }
+    }
+
     public static List<HypackLogSummary> Parse(
         IEnumerable<string> directLogPaths,
         IEnumerable<string> importedSurveyPaths,
