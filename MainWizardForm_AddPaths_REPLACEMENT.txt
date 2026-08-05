@@ -1,29 +1,50 @@
-Replace only the existing AddPaths(...) method in MainWizardForm.cs with this method:
+Replace the existing AddPaths(IEnumerable<string> paths) method in MainWizardForm.cs with this method:
 
-private void AddPaths(IEnumerable<string> paths)
-{
-    foreach (string path in paths)
+    private void AddPaths(IEnumerable<string> paths)
     {
-        string extension = Path.GetExtension(path);
-        if (extension.Equals(".log", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!_project.ImportedLogFiles.Contains(path, StringComparer.OrdinalIgnoreCase))
-                _project.ImportedLogFiles.Add(path);
+        SurveyImportResolution resolution = SurveyImportResolver.Resolve(paths);
 
-            // A directly loaded HYPACK LOG is an organizational entry point.
-            // Resolve and add every referenced RAW file that exists beside or
-            // below the LOG file's survey folder.
-            foreach (string rawPath in HypackLogParser.DiscoverReferencedRawFiles(path))
-            {
-                if (!_project.ImportedRawFiles.Contains(rawPath, StringComparer.OrdinalIgnoreCase))
-                    _project.ImportedRawFiles.Add(rawPath);
-            }
-        }
-        else if (extension.Equals(".raw", StringComparison.OrdinalIgnoreCase) ||
-                 extension.Equals(".zip", StringComparison.OrdinalIgnoreCase))
+        foreach (string logPath in resolution.LogPaths)
         {
-            if (!_project.ImportedRawFiles.Contains(path, StringComparer.OrdinalIgnoreCase))
-                _project.ImportedRawFiles.Add(path);
+            if (!_project.ImportedLogFiles.Contains(logPath, StringComparer.OrdinalIgnoreCase))
+                _project.ImportedLogFiles.Add(logPath);
+        }
+
+        foreach (string surveyPath in resolution.RawOrZipPaths)
+        {
+            if (!_project.ImportedRawFiles.Contains(surveyPath, StringComparer.OrdinalIgnoreCase))
+                _project.ImportedRawFiles.Add(surveyPath);
+        }
+
+        if (resolution.RawFilesDiscoveredFromLogs.Count > 0)
+        {
+            _project.Findings.RemoveAll(f => f.RuleId == "LOG-RAW-AUTOLOAD");
+            _project.Findings.Add(new QaFinding
+            {
+                RuleId = "LOG-RAW-AUTOLOAD",
+                Severity = "Info",
+                Category = "HYPACK LOG",
+                Description = $"Loaded {resolution.RawFilesDiscoveredFromLogs.Count} RAW file(s) referenced by the selected HYPACK LOG file(s).",
+                Evidence = string.Join(", ", resolution.RawFilesDiscoveredFromLogs.Select(Path.GetFileName).Take(30))
+            });
+        }
+
+        foreach (string unresolved in resolution.UnresolvedLogReferences)
+        {
+            if (_project.Findings.Any(f => f.RuleId == "LOG-RAW-UNRESOLVED" && f.Evidence == unresolved))
+                continue;
+
+            _project.Findings.Add(new QaFinding
+            {
+                RuleId = "LOG-RAW-UNRESOLVED",
+                Severity = "Warning",
+                Category = "HYPACK LOG",
+                Description = "A RAW file referenced by the selected HYPACK LOG could not be found beside the LOG or below its survey folder.",
+                Evidence = unresolved
+            });
         }
     }
-}
+
+MainWizardForm.cs already imports HydroTerraFieldDataCompiler.Parsing in v0.32. If your file does not, add:
+
+using HydroTerraFieldDataCompiler.Parsing;

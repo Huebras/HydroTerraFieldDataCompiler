@@ -1,28 +1,37 @@
-HydroTerra Step 8 Live Map Update Patch
+HydroTerra HYPACK LOG Loader Fix v0.33.3
+========================================
 
-This patch fixes the issue where checking or unchecking the Step 8 remaining-line criteria did not update the plan view.
+Purpose
+-------
+This patch makes a selected HYPACK .LOG file act as an import entry point.
+All RAW files referenced by the LOG are resolved and added to the same
+ImportedRawFiles collection used by manual RAW selection.
 
-Changes:
-- Criteria checkboxes immediately rerun the remaining-line analysis.
-- The Unsurveyed Portions table refreshes immediately.
-- Plan View is now modeless, so it can remain open while criteria are changed.
-- An open Plan View receives the recalculated gaps and highlights immediately.
-- DXF and LNW exports continue to use the same current results shown in the map.
+Files
+-----
+1. Copy:
+   src/HydroTerraFieldDataCompiler/Parsing/SurveyImportResolver.cs
+   to the matching Parsing folder in your repository.
 
-INSTALLATION
-1. Close Visual Studio and the HydroTerra application.
-2. Back up or commit your current work in GitHub Desktop.
-3. Replace:
-   src\HydroTerraFieldDataCompiler\PlanViewForm.cs
-   with the PlanViewForm.cs included in this patch.
-4. Apply MainWizardForm_live_map.patch to MainWizardForm.cs, or manually make the edits shown in the patch file.
-   Do NOT replace your entire MainWizardForm.cs, because it may contain the Requirements Engine and LOG auto-load updates.
-5. Build locally and test Step 8.
-6. Commit summary:
-   Make Step 8 criteria update plan view live
+2. Open MainWizardForm_AddPaths_replacement.txt and replace only the existing
+   AddPaths(IEnumerable<string> paths) method in MainWizardForm.cs.
 
-Expected behavior:
-- Open Plan View.
-- Leave it open.
-- Check or uncheck Coverage, Offline, RTK, Navigation Integrity, or Depth QA.
-- The line table, remaining portions, and open map update automatically.
+Do not replace your entire MainWizardForm.cs because it may already contain
+Requirements Engine and Step 8 live-map changes.
+
+Validated input
+---------------
+The resolver was designed and checked against the uploaded towfish package,
+whose RAW04222026.LOG contains 29 bare RAW filenames located beside the LOG.
+The expected result is 1 LOG plus 29 RAW paths added to the import inventory.
+
+Resolution order
+----------------
+1. Existing absolute RAW path
+2. Path relative to the LOG file
+3. Recursive filename search under the LOG folder
+4. Unresolved warning with the exact LOG/reference pair
+
+GitHub commit summary
+---------------------
+Fix LOG import to load referenced RAW files
