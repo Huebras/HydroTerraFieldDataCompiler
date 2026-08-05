@@ -1,30 +1,21 @@
-HydroTerra Magnetometer QA v0.34
+HydroTerra Device-Aware EC1/EC2 Classification v0.34.1
 
-Copy the contents of the included src folder into the repository root and allow Windows to replace matching files.
+Copy the included src folder into the root of your repository and allow Windows to replace the two matching files.
 
-Changed files:
-- MainWizardForm.cs
-- ProjectHealthEvaluator.cs
-- WordReportGenerator.cs
-- Models/ProjectModels.cs
-New file:
-- MagnetometerQaAnalyzer.cs
+Changes:
+- Parses both EC1 and EC2 records while preserving the HYPACK device ID.
+- Treats the number after EC1/EC2 as the source device ID.
+- EC records from a magnetometer device are classified as magnetometer observations.
+- EC records from a single-beam/echosounder device are classified as depth observations.
+- Magnetometer EC records no longer count toward high-frequency or low-frequency depth totals.
+- Magnetometer EC records no longer trigger single-beam auto-selection, BIN requirements, depth QA, or single-beam reporting.
+- EC records tied to an unknown device create an ECDEV001 review warning instead of being guessed as single beam.
 
-Initial QA checks:
-- Magnetometer device identification from DEV metadata
-- Record counts by HYPACK LNN line
-- Invalid/non-numeric values
-- Frozen runs (10 or more identical values)
-- Timing gaps above 3x the average interval (minimum 1 second)
-- Estimated missing record count
-- Per-line minimum and maximum
-- QA findings, Project Health rows, and Word report table
-
-Important:
-The uploaded towfish sample records magnetometer observations as EC2 records from the Magnetometer Interface device ID. The analyzer therefore classifies data by device ID rather than assuming EC2 always means single-beam depth.
-
-Build validation:
-This environment does not contain the .NET SDK. Run build_windows.bat and confirm the GitHub Actions build is green.
+After copying:
+1. Run build_windows.bat.
+2. Re-import and rescan the magnetometer survey.
+3. Confirm Step 4 selects Magnetometer without Single Beam.
+4. Regenerate the report and confirm Section 6 no longer lists Single Beam / High Frequency for magnetometer-only data.
 
 Suggested commit summary:
-Add initial magnetometer QA analysis
+Fix device-aware EC1 and EC2 survey classification

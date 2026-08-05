@@ -94,7 +94,7 @@ public sealed class HypackRawReader
         if (type == "POS") return ParsePos(fields, text, sourceLineNumber);
         if (type == "DEV") return ParseDev(fields, text, sourceLineNumber);
         if (type == "OFF") return ParseOff(fields, text, sourceLineNumber);
-        if (type == "EC2") return ParseEc2(fields, text, sourceLineNumber);
+        if (type == "EC1" || type == "EC2") return ParseEc(fields, text, sourceLineNumber, type);
         if (type == "TID") return ParseTid(fields, text, sourceLineNumber);
         if (type == "FIX") return ParseFix(fields, text, sourceLineNumber);
         if (type == "PRD") return ParsePrd(fields, text, sourceLineNumber);
@@ -203,9 +203,9 @@ public sealed class HypackRawReader
         };
     }
 
-    private static EchosounderHypackRecord ParseEc2(string[] fields, string text, int lineNumber) => new()
+    private static EchosounderHypackRecord ParseEc(string[] fields, string text, int lineNumber, string recordType) => new()
     {
-        RecordType = "EC2", RawText = text, SourceLineNumber = lineNumber,
+        RecordType = recordType, RawText = text, SourceLineNumber = lineNumber,
         DeviceId = TryInt(fields, 1), SecondsOfDay = TryDouble(fields, 2),
         Depth1 = TryDouble(fields, 3), Depth2 = TryDouble(fields, 4)
     };

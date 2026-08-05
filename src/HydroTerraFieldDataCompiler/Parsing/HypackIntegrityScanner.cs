@@ -68,6 +68,7 @@ public sealed class HypackIntegrityScanner
             var devicesById = new Dictionary<int, DeviceConfiguration>();
             bool applanixEvidence = false;
             bool vrsEvidence = false;
+            int unresolvedEcRecordCount = 0;
             var rawReader = new HypackRawReader();
             string activeSurveyLine = string.Empty;
             while ((line = reader.ReadLine()) != null)
@@ -96,13 +97,29 @@ public sealed class HypackIntegrityScanner
                         summary.MaximumY = !summary.MaximumY.HasValue || posRecord.Y.Value > summary.MaximumY.Value ? posRecord.Y.Value : summary.MaximumY;
                     }
                 }
-                if (parsedRecord is EchosounderHypackRecord ec2Record)
+                if (parsedRecord is EchosounderHypackRecord ecRecord)
                 {
-                    summary.EchosounderRecordCount++;
-                    if (IsUsableDepth(ec2Record.Depth1)) summary.HighFrequencyDepthCount++;
-                    if (IsUsableDepth(ec2Record.Depth2)) summary.LowFrequencyDepthCount++;
-                    summary.EchosounderStartSeconds = !summary.EchosounderStartSeconds.HasValue || ec2Record.SecondsOfDay < summary.EchosounderStartSeconds ? ec2Record.SecondsOfDay : summary.EchosounderStartSeconds;
-                    summary.EchosounderEndSeconds = !summary.EchosounderEndSeconds.HasValue || ec2Record.SecondsOfDay > summary.EchosounderEndSeconds ? ec2Record.SecondsOfDay : summary.EchosounderEndSeconds;
+                    DeviceConfiguration? sourceDevice = ecRecord.DeviceId.HasValue && devicesById.TryGetValue(ecRecord.DeviceId.Value, out DeviceConfiguration? mappedDevice)
+                        ? mappedDevice
+                        : null;
+
+                    if (IsMagnetometerDevice(sourceDevice))
+                    {
+                        Add(summary.SuggestedDataTypes, SurveyDataType.Magnetometer);
+                    }
+                    else if (IsSingleBeamDevice(sourceDevice))
+                    {
+                        Add(summary.SuggestedDataTypes, SurveyDataType.SingleBeamFrequencyUnknown);
+                        summary.EchosounderRecordCount++;
+                        if (IsUsableDepth(ecRecord.Depth1)) summary.HighFrequencyDepthCount++;
+                        if (IsUsableDepth(ecRecord.Depth2)) summary.LowFrequencyDepthCount++;
+                        summary.EchosounderStartSeconds = !summary.EchosounderStartSeconds.HasValue || ecRecord.SecondsOfDay < summary.EchosounderStartSeconds ? ecRecord.SecondsOfDay : summary.EchosounderStartSeconds;
+                        summary.EchosounderEndSeconds = !summary.EchosounderEndSeconds.HasValue || ecRecord.SecondsOfDay > summary.EchosounderEndSeconds ? ecRecord.SecondsOfDay : summary.EchosounderEndSeconds;
+                    }
+                    else
+                    {
+                        unresolvedEcRecordCount++;
+                    }
                 }
                 if (parsedRecord is TideHypackRecord) summary.TideRecordCount++;
                 if (parsedRecord is FixHypackRecord) summary.FixRecordCount++;
@@ -209,6 +226,10 @@ public sealed class HypackIntegrityScanner
                     string.Join(" | ", offsetDevices.Select(d => $"ID {d.DeviceId} {d.DeviceName}: Stbd {d.RecordedStarboard}, Fwd {d.RecordedForward}, Vert {d.RecordedVertical}")), displayName));
 
             DetectSingleBeamFrequencyMode(summary);
+            if (unresolvedEcRecordCount > 0)
+                result.Findings.Add(Finding("ECDEV001", "Warning", "Survey Type",
+                    $"{unresolvedEcRecordCount:N0} EC1/EC2 record(s) could not be assigned to a recognized sensor type.",
+                    "The record device ID did not match a recognized magnetometer or single-beam device definition. Confirm the HYPACK DEV header.", displayName));
             if (summary.RecordCount == 0) result.Findings.Add(Finding("FILE004", "Failure", "File Integrity", "RAW file contains no readable records.", displayName, displayName));
             if (summary.TimestampCount == 0) result.Findings.Add(Finding("TIME002", "Warning", "Timing", "No recognizable timestamps were found.", displayName, displayName));
             if (summary.NavigationCount == 0) result.Findings.Add(Finding("NAV001", "Failure", "Navigation", "No recognizable navigation records were found.", displayName, displayName));
@@ -678,7 +699,7 @@ public sealed class HypackIntegrityScanner
     }
 
     private static bool IsNavigationRecord(string type, string line) => type.Equals("POS", StringComparison.OrdinalIgnoreCase) || type.Equals("GPS", StringComparison.OrdinalIgnoreCase) || type.Equals("RAW", StringComparison.OrdinalIgnoreCase) || line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("EASTING", StringComparison.OrdinalIgnoreCase) || line.Contains("NORTHING", StringComparison.OrdinalIgnoreCase);
-    private static void DetectDataTypes(string line, List<SurveyDataType> types) { AddIf(line, types, SurveyDataType.SingleBeamFrequencyUnknown, "SINGLE BEAM", "ECHOSOUNDER", "SBES", "EC1", "DBT"); AddIf(line, types, SurveyDataType.Multibeam, "MULTIBEAM", "MBES", "SONAR", "SEABAT", "EM2040", "NORBIT"); AddIf(line, types, SurveyDataType.SideScan, "SIDE SCAN", "SIDESCAN", "EDGETECH", "KLEIN"); AddIf(line, types, SurveyDataType.Magnetometer, "MAGNETOMETER", "MAG ", "G-882", "G882", "MARINE MAG"); AddIf(line, types, SurveyDataType.SubBottom, "SUBBOTTOM", "SUB-BOTTOM", "CHIRP"); AddIf(line, types, SurveyDataType.Adcp, "ADCP"); AddIf(line, types, SurveyDataType.SoundVelocity, "SVP", "SOUND VELOCITY", "SVC"); AddIf(line, types, SurveyDataType.TideOrWaterLevel, "TIDE", "WATER LEVEL"); AddIf(line, types, SurveyDataType.TowfishPositioning, "TOWFISH", "LAYBACK", "CABLE OUT"); if (line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase)) Add(types, SurveyDataType.NavigationOnly); }
+    private static void DetectDataTypes(string line, List<SurveyDataType> types) { AddIf(line, types, SurveyDataType.SingleBeamFrequencyUnknown, "SINGLE BEAM", "ECHOSOUNDER", "SBES", "DBT"); AddIf(line, types, SurveyDataType.Multibeam, "MULTIBEAM", "MBES", "SONAR", "SEABAT", "EM2040", "NORBIT"); AddIf(line, types, SurveyDataType.SideScan, "SIDE SCAN", "SIDESCAN", "EDGETECH", "KLEIN"); AddIf(line, types, SurveyDataType.Magnetometer, "MAGNETOMETER", "MAG ", "G-882", "G882", "MARINE MAG"); AddIf(line, types, SurveyDataType.SubBottom, "SUBBOTTOM", "SUB-BOTTOM", "CHIRP"); AddIf(line, types, SurveyDataType.Adcp, "ADCP"); AddIf(line, types, SurveyDataType.SoundVelocity, "SVP", "SOUND VELOCITY", "SVC"); AddIf(line, types, SurveyDataType.TideOrWaterLevel, "TIDE", "WATER LEVEL"); AddIf(line, types, SurveyDataType.TowfishPositioning, "TOWFISH", "LAYBACK", "CABLE OUT"); if (line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase)) Add(types, SurveyDataType.NavigationOnly); }
     private static void AddIf(string line, List<SurveyDataType> types, SurveyDataType type, params string[] terms) { if (terms.Any(t => line.Contains(t, StringComparison.OrdinalIgnoreCase))) Add(types, type); }
     private static void Add(List<SurveyDataType> types, SurveyDataType type) { if (!types.Contains(type)) types.Add(type); }
     private static void DetectSurveyLine(string line, Dictionary<string, int> counts) { Match match = LineRegex.Match(line); if (!match.Success) return; string name = match.Groups["name"].Value.Trim(); if (name.Length == 0 || name.Length > 40) return; counts[name] = counts.TryGetValue(name, out int value) ? value + 1 : 1; }
@@ -748,6 +769,28 @@ public sealed class HypackIntegrityScanner
     }
     private static DateTime? TryReadDate(string line) { Match match = DateRegex.Match(line); if (!match.Success) return null; int month = int.Parse(match.Groups["m"].Value, CultureInfo.InvariantCulture); int day = int.Parse(match.Groups["d"].Value, CultureInfo.InvariantCulture); int year = int.Parse(match.Groups["y"].Value, CultureInfo.InvariantCulture); if (year < 100) year += year >= 80 ? 1900 : 2000; try { return new DateTime(year, month, day); } catch { return null; } }
     private static TimeSpan? TryReadTime(string line) { Match match = TimeRegex.Match(line); if (!match.Success) return null; int h = int.Parse(match.Groups["h"].Value, CultureInfo.InvariantCulture); int m = int.Parse(match.Groups["m"].Value, CultureInfo.InvariantCulture); double s = double.Parse(match.Groups["s"].Value, CultureInfo.InvariantCulture); return TimeSpan.FromHours(h) + TimeSpan.FromMinutes(m) + TimeSpan.FromSeconds(s); }
+
+    private static bool IsMagnetometerDevice(DeviceConfiguration? device)
+    {
+        if (device == null) return false;
+        return device.DeviceType.Contains("Magnet", StringComparison.OrdinalIgnoreCase) ||
+               device.DeviceName.Contains("Magnet", StringComparison.OrdinalIgnoreCase) ||
+               device.Model.Contains("G-882", StringComparison.OrdinalIgnoreCase) ||
+               device.Model.Contains("G882", StringComparison.OrdinalIgnoreCase) ||
+               device.DriverPath.Contains("Magnet", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSingleBeamDevice(DeviceConfiguration? device)
+    {
+        if (device == null) return false;
+        return device.DeviceType.Contains("Single Beam", StringComparison.OrdinalIgnoreCase) ||
+               device.DeviceType.Contains("Echosounder", StringComparison.OrdinalIgnoreCase) ||
+               device.DeviceName.Contains("Echosounder", StringComparison.OrdinalIgnoreCase) ||
+               device.DeviceName.Contains("EchoTrac", StringComparison.OrdinalIgnoreCase) ||
+               device.DriverPath.Contains("Echosounder", StringComparison.OrdinalIgnoreCase) ||
+               device.DriverPath.Contains("EchoTrac", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsUsableDepth(double? value)
     {
         return value.HasValue && !double.IsNaN(value.Value) && !double.IsInfinity(value.Value) && value.Value > 0.001;
