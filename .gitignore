@@ -1,24 +1,36 @@
 # Visual Studio
 .vs/
+*.user
+*.suo
 
 # Build output
 bin/
 obj/
+publish/
 
-# User files
-*.user
-*.suo
-
-# Build artifacts
+# Compiled artifacts
 *.exe
 *.dll
 *.pdb
 *.deps.json
 *.runtimeconfig.json
 
-# Publish output
-publish/
+# Test and coverage output
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
 
 # Windows
 Thumbs.db
 Desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+~$*
