@@ -1,34 +1,20 @@
-HydroTerra global footer layout fix
-===================================
+HydroTerra consolidated UI fix v0.33.5
 
-Problem
--------
-At higher Windows display/text scaling, the bottom wizard buttons are partially
-covered by the form edge because the footer row is auto-sized too tightly.
+This replaces the two earlier partial fixes for:
+1. Bottom wizard buttons being clipped at high Windows DPI/text scaling.
+2. Step 8 criteria checkboxes not updating an already-open Plan View.
 
-What this patch changes
------------------------
-- Reserves a 58-pixel DPI-scaled footer row globally.
-- Adds extra bottom padding to the main shell.
-- Disables footer AutoSize so the row cannot collapse.
-- Adds bottom margins to Open, Back, Next, and Save buttons.
-- Slightly reduces button height to leave reliable clearance.
+INSTALL
+1. Extract this ZIP anywhere.
+2. Open PowerShell in the extracted folder.
+3. Run, replacing the path with your cloned GitHub repository:
 
-Apply
------
-1. Close Visual Studio and the running app.
-2. Copy this patch folder into the repository root, or open PowerShell there.
-3. Run:
+   powershell -ExecutionPolicy Bypass -File .\apply_fix.ps1 -RepositoryRoot "C:\Users\jason\Documents\GitHub\HydroTerraFieldDataCompiler"
 
-   powershell -ExecutionPolicy Bypass -File .\Apply-GlobalFooterFix.ps1
+4. Build the solution locally.
+5. Open Step 8, click Open Plan View, leave it open, then toggle criteria.
+   The highlighted remaining portions should change immediately.
+6. Confirm the Open / Back / Next / Save buttons are fully visible.
 
-   If the script is elsewhere, pass the repository path:
-
-   powershell -ExecutionPolicy Bypass -File .\Apply-GlobalFooterFix.ps1 -ProjectRoot "C:\path\to\HydroTerraFieldDataCompiler"
-
-4. Build and test at your current Windows scaling.
-5. The script creates MainWizardForm.cs.before-footer-fix as a backup.
-
-Suggested Git summary
----------------------
-Fix global wizard footer button clipping
+Git summary:
+Fix footer clipping and live Step 8 map refresh
