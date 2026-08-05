@@ -1,20 +1,24 @@
-HydroTerra consolidated UI fix v0.33.5
+HydroTerra Step 1 Responsive Layout Fix
 
-This replaces the two earlier partial fixes for:
-1. Bottom wizard buttons being clipped at high Windows DPI/text scaling.
-2. Step 8 criteria checkboxes not updating an already-open Plan View.
+Problem fixed:
+- At higher Windows DPI or text scaling, Step 1 labels extended underneath the text boxes, hiding the beginning or ending of field labels/content.
 
-INSTALL
-1. Extract this ZIP anywhere.
-2. Open PowerShell in the extracted folder.
-3. Run, replacing the path with your cloned GitHub repository:
+What this patch changes:
+- Replaces fixed X/Y positions with a two-column TableLayoutPanel.
+- Labels receive a reserved DPI-safe column.
+- Text boxes expand with the window.
+- Notes remains multiline and scrollable.
+- The page remains vertically scrollable on smaller displays.
 
-   powershell -ExecutionPolicy Bypass -File .\apply_fix.ps1 -RepositoryRoot "C:\Users\jason\Documents\GitHub\HydroTerraFieldDataCompiler"
+Installation:
+1. Copy this patch folder into any convenient location.
+2. Open PowerShell in the repository root (the folder containing HydroTerraFieldDataCompiler.sln).
+3. Run:
 
-4. Build the solution locally.
-5. Open Step 8, click Open Plan View, leave it open, then toggle criteria.
-   The highlighted remaining portions should change immediately.
-6. Confirm the Open / Back / Next / Save buttons are fully visible.
+   powershell -ExecutionPolicy Bypass -File "PATH_TO_PATCH\apply_step1_layout_fix.ps1"
 
-Git summary:
-Fix footer clipping and live Step 8 map refresh
+4. Build locally and review Step 1.
+5. Commit the changed MainWizardForm.cs file.
+
+Suggested commit summary:
+Fix Step 1 field overlap at scaled display settings
