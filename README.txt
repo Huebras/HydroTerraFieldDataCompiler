@@ -1,37 +1,34 @@
-HydroTerra HYPACK LOG Loader Fix v0.33.3
-========================================
+HydroTerra global footer layout fix
+===================================
 
-Purpose
+Problem
 -------
-This patch makes a selected HYPACK .LOG file act as an import entry point.
-All RAW files referenced by the LOG are resolved and added to the same
-ImportedRawFiles collection used by manual RAW selection.
+At higher Windows display/text scaling, the bottom wizard buttons are partially
+covered by the form edge because the footer row is auto-sized too tightly.
 
-Files
+What this patch changes
+-----------------------
+- Reserves a 58-pixel DPI-scaled footer row globally.
+- Adds extra bottom padding to the main shell.
+- Disables footer AutoSize so the row cannot collapse.
+- Adds bottom margins to Open, Back, Next, and Save buttons.
+- Slightly reduces button height to leave reliable clearance.
+
+Apply
 -----
-1. Copy:
-   src/HydroTerraFieldDataCompiler/Parsing/SurveyImportResolver.cs
-   to the matching Parsing folder in your repository.
+1. Close Visual Studio and the running app.
+2. Copy this patch folder into the repository root, or open PowerShell there.
+3. Run:
 
-2. Open MainWizardForm_AddPaths_replacement.txt and replace only the existing
-   AddPaths(IEnumerable<string> paths) method in MainWizardForm.cs.
+   powershell -ExecutionPolicy Bypass -File .\Apply-GlobalFooterFix.ps1
 
-Do not replace your entire MainWizardForm.cs because it may already contain
-Requirements Engine and Step 8 live-map changes.
+   If the script is elsewhere, pass the repository path:
 
-Validated input
----------------
-The resolver was designed and checked against the uploaded towfish package,
-whose RAW04222026.LOG contains 29 bare RAW filenames located beside the LOG.
-The expected result is 1 LOG plus 29 RAW paths added to the import inventory.
+   powershell -ExecutionPolicy Bypass -File .\Apply-GlobalFooterFix.ps1 -ProjectRoot "C:\path\to\HydroTerraFieldDataCompiler"
 
-Resolution order
-----------------
-1. Existing absolute RAW path
-2. Path relative to the LOG file
-3. Recursive filename search under the LOG folder
-4. Unresolved warning with the exact LOG/reference pair
+4. Build and test at your current Windows scaling.
+5. The script creates MainWizardForm.cs.before-footer-fix as a backup.
 
-GitHub commit summary
+Suggested Git summary
 ---------------------
-Fix LOG import to load referenced RAW files
+Fix global wizard footer button clipping
