@@ -54,6 +54,7 @@ public sealed class FieldDataProject
     public List<OffsetChange> OffsetChanges { get; set; } = new();
     public List<SurveyLineSummary> SurveyLines { get; set; } = new();
     public List<LineCoverageResult> LineCoverageResults { get; set; } = new();
+    public List<MagnetometerLineQaResult> MagnetometerQaResults { get; set; } = new();
     public double OfflineToleranceFeet { get; set; } = 20.0;
     public double CoverageGapFeet { get; set; } = 20.0;
     public double GapExportOverlapFeet { get; set; } = 25.0;
@@ -346,6 +347,28 @@ public sealed class LineGap
     public double StartChainage { get; set; }
     public double EndChainage { get; set; }
     public double MissingLength => Math.Max(0, EndChainage - StartChainage);
+}
+
+
+public sealed class MagnetometerLineQaResult
+{
+    public string LineName { get; set; } = string.Empty;
+    public List<string> SourceFiles { get; set; } = new();
+    public int DeviceId { get; set; } = -1;
+    public string DeviceName { get; set; } = string.Empty;
+    public int RecordCount { get; set; }
+    public int InvalidValueCount { get; set; }
+    public int FrozenRunCount { get; set; }
+    public int DataGapCount { get; set; }
+    public int EstimatedMissingRecordCount { get; set; }
+    public double AverageIntervalSeconds { get; set; }
+    public double MaximumIntervalSeconds { get; set; }
+    public double? MinimumValue { get; set; }
+    public double? MaximumValue { get; set; }
+    public double NavigationStartOffsetSeconds { get; set; }
+    public double NavigationEndOffsetSeconds { get; set; }
+    public bool HasWarning => RecordCount == 0 || InvalidValueCount > 0 || FrozenRunCount > 0 || DataGapCount > 0 || Math.Abs(NavigationStartOffsetSeconds) > 2 || Math.Abs(NavigationEndOffsetSeconds) > 2;
+    public string Summary { get; set; } = string.Empty;
 }
 
 public sealed class SupportingFile { public string Path { get; set; } = string.Empty; public string Category { get; set; } = string.Empty; public string Description { get; set; } = string.Empty; public string Sha256 { get; set; } = string.Empty; public DateTime DateAddedUtc { get; set; } = DateTime.UtcNow; }

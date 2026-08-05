@@ -392,6 +392,10 @@ public sealed class MainWizardForm : Form
             }
             MergeSurveyLines(result.Files);
             RunLineCoverageAnalysis(false);
+            _project.MagnetometerQaResults = MagnetometerQaAnalyzer.Analyze(_project);
+            _project.Findings.RemoveAll(f => f.RuleId.StartsWith("MAG", StringComparison.OrdinalIgnoreCase));
+            foreach (var mag in _project.MagnetometerQaResults.Where(x => x.HasWarning))
+                _project.Findings.Add(new QaFinding { RuleId = "MAG001", Severity = "Warning", Category = "Magnetometer", SurveyLine = mag.LineName, FileName = string.Join(", ", mag.SourceFiles.Select(SourceDisplayName)), Description = "Magnetometer continuity or value warning detected.", Evidence = mag.Summary });
             var nonFixed = result.Files.SelectMany(f => f.GnssSolutionCounts).Where(k => k.Key is GnssSolutionType.Float or GnssSolutionType.Autonomous or GnssSolutionType.Invalid or GnssSolutionType.NoSolution).Sum(k => k.Value);
             if (nonFixed > 0) _project.Findings.Add(new QaFinding { RuleId = "GNSS001", Severity = "Warning", Category = "Positioning", Description = $"{nonFixed} potentially non-fixed or invalid GNSS solution records were detected.", Evidence = "Review the Positioning Method page and affected files." });
             MessageBox.Show(this, $"Scan complete: {result.Files.Count} RAW files, {_project.HypackLogSummaries.Count} LOG files, {_project.Devices.Count} devices, and {_project.Findings.Count} findings.", "HydroTerra", MessageBoxButtons.OK, MessageBoxIcon.Information);

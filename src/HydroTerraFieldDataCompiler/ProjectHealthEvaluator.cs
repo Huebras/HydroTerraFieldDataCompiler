@@ -77,8 +77,12 @@ public static class ProjectHealthEvaluator
         }
         if (anyMag)
         {
-            Add(health, "Magnetometer", "Towfish/device configuration", project.Devices.Any(d => d.DeviceType.Contains("Tow", StringComparison.OrdinalIgnoreCase) || d.DeviceName.Contains("Tow", StringComparison.OrdinalIgnoreCase)), true,
-                "Confirm towfish, magnetometer, and layback configuration.", HealthStatus.Warning);
+            bool hasMagDevice = project.Devices.Any(d => d.DeviceType.Contains("Magnet", StringComparison.OrdinalIgnoreCase) || d.DeviceName.Contains("Magnet", StringComparison.OrdinalIgnoreCase));
+            bool hasTowfish = project.Devices.Any(d => d.DeviceType.Contains("Tow", StringComparison.OrdinalIgnoreCase) || d.DeviceName.Contains("Tow", StringComparison.OrdinalIgnoreCase)) || project.DataTypes.Contains(SurveyDataType.TowfishPositioning);
+            Add(health, "Magnetometer", "Magnetometer device detected", hasMagDevice, true, hasMagDevice ? "A magnetometer interface/device was detected." : "No magnetometer device was identified.", HealthStatus.Warning);
+            Add(health, "Magnetometer", "Towfish position source", hasTowfish || !string.IsNullOrWhiteSpace(project.QaPositionSourceLabel), true, hasTowfish ? "Towfish positioning was detected." : $"QA position source: {project.QaPositionSourceLabel}", HealthStatus.Warning);
+            int magWarnings = project.MagnetometerQaResults.Count(x => x.HasWarning);
+            Add(health, "Magnetometer", "Data continuity and values", project.MagnetometerQaResults.Count > 0 && magWarnings == 0, true, project.MagnetometerQaResults.Count == 0 ? "Magnetometer data has not been analyzed." : magWarnings == 0 ? $"All {project.MagnetometerQaResults.Count} line(s) passed initial magnetometer continuity checks." : $"{magWarnings} of {project.MagnetometerQaResults.Count} line(s) require review.", HealthStatus.Warning);
         }
 
         int failures = project.Findings.Count(f => f.Severity.Equals("Failure", StringComparison.OrdinalIgnoreCase));

@@ -1,24 +1,30 @@
-HydroTerra Step 1 Responsive Layout Fix
+HydroTerra Magnetometer QA v0.34
 
-Problem fixed:
-- At higher Windows DPI or text scaling, Step 1 labels extended underneath the text boxes, hiding the beginning or ending of field labels/content.
+Copy the contents of the included src folder into the repository root and allow Windows to replace matching files.
 
-What this patch changes:
-- Replaces fixed X/Y positions with a two-column TableLayoutPanel.
-- Labels receive a reserved DPI-safe column.
-- Text boxes expand with the window.
-- Notes remains multiline and scrollable.
-- The page remains vertically scrollable on smaller displays.
+Changed files:
+- MainWizardForm.cs
+- ProjectHealthEvaluator.cs
+- WordReportGenerator.cs
+- Models/ProjectModels.cs
+New file:
+- MagnetometerQaAnalyzer.cs
 
-Installation:
-1. Copy this patch folder into any convenient location.
-2. Open PowerShell in the repository root (the folder containing HydroTerraFieldDataCompiler.sln).
-3. Run:
+Initial QA checks:
+- Magnetometer device identification from DEV metadata
+- Record counts by HYPACK LNN line
+- Invalid/non-numeric values
+- Frozen runs (10 or more identical values)
+- Timing gaps above 3x the average interval (minimum 1 second)
+- Estimated missing record count
+- Per-line minimum and maximum
+- QA findings, Project Health rows, and Word report table
 
-   powershell -ExecutionPolicy Bypass -File "PATH_TO_PATCH\apply_step1_layout_fix.ps1"
+Important:
+The uploaded towfish sample records magnetometer observations as EC2 records from the Magnetometer Interface device ID. The analyzer therefore classifies data by device ID rather than assuming EC2 always means single-beam depth.
 
-4. Build locally and review Step 1.
-5. Commit the changed MainWizardForm.cs file.
+Build validation:
+This environment does not contain the .NET SDK. Run build_windows.bat and confirm the GitHub Actions build is green.
 
 Suggested commit summary:
-Fix Step 1 field overlap at scaled display settings
+Add initial magnetometer QA analysis

@@ -144,7 +144,16 @@ public static class WordReportGenerator
         }
         b.Append(Table(new[] { "Line", "QA position", "Seg.", "Positions", "Offline", "Max off", "Gaps", "RTK fixed", "Nav score", "Max speed", "Nav gaps", "Depth QA", "Status" }, lineRows.ToArray(), 13));
 
-        Section(b, "8. Project Health Findings");
+        if (p.MagnetometerQaResults.Count > 0)
+        {
+            Section(b, "8. Magnetometer QA");
+            var magRows = new List<string>();
+            foreach (MagnetometerLineQaResult m in p.MagnetometerQaResults)
+                magRows.AddRange(new[] { m.LineName, m.DeviceName, m.RecordCount.ToString("N0"), m.DataGapCount.ToString(), m.EstimatedMissingRecordCount.ToString(), m.FrozenRunCount.ToString(), m.InvalidValueCount.ToString(), m.MinimumValue?.ToString("0.###") ?? "—", m.MaximumValue?.ToString("0.###") ?? "—", m.HasWarning ? "Warning" : "Pass" });
+            b.Append(Table(new[] { "Line", "Device", "Records", "Gaps", "Est. missing", "Frozen", "Invalid", "Min", "Max", "Status" }, magRows.ToArray(), 10));
+        }
+
+        Section(b, "9. Project Health Findings");
         var healthRows = new List<string>();
         foreach (ProjectHealthItem i in health.Items.OrderBy(x => x.Status == HealthStatus.Failure ? 0 : x.Status == HealthStatus.Warning ? 1 : 2))
             healthRows.AddRange(new[] { i.Status.ToString(), i.Category, i.Requirement, i.IsRequired ? "Yes" : "No", i.Details });
