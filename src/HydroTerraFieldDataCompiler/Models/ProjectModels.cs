@@ -38,6 +38,8 @@ public sealed class FieldDataProject
     public string Notes { get; set; } = string.Empty;
     public List<SurveyDataType> DataTypes { get; set; } = new();
     public List<SurveyDataType> DetectedDataTypes { get; set; } = new();
+    public List<EquipmentDetection> DetectedEquipment { get; set; } = new();
+    public List<SurveyTypeDetection> SurveyTypeDetections { get; set; } = new();
     public bool DataTypesManuallyConfirmed { get; set; }
     public List<PositioningMethod> PositioningMethods { get; set; } = new();
     public PositioningMethod DetectedPositioningMethod { get; set; } = PositioningMethod.Unknown;
@@ -153,7 +155,39 @@ public sealed class RawFileSummary
     public bool HasMatchingBin { get; set; }
     public string MatchingBinName { get; set; } = string.Empty;
     public string DetectedSurveyType { get; set; } = string.Empty;
+    public List<DeviceDataUsage> DeviceDataUsage { get; set; } = new();
 }
+
+public sealed class DeviceDataUsage
+{
+    public int? DeviceId { get; set; }
+    public string DeviceName { get; set; } = string.Empty;
+    public string EquipmentType { get; set; } = string.Empty;
+    public int EcRecordCount { get; set; }
+    public int HighFrequencyValueCount { get; set; }
+    public int LowFrequencyValueCount { get; set; }
+    public int MagnetometerValueCount { get; set; }
+    public int PositionRecordCount { get; set; }
+    public string SourceFile { get; set; } = string.Empty;
+}
+
+public sealed class EquipmentDetection
+{
+    public int? DeviceId { get; set; }
+    public string DeviceName { get; set; } = string.Empty;
+    public string EquipmentType { get; set; } = string.Empty;
+    public DetectionConfidence Confidence { get; set; } = DetectionConfidence.NotDetected;
+    public int ObservationCount { get; set; }
+    public List<string> Evidence { get; set; } = new();
+}
+
+public sealed class SurveyTypeDetection
+{
+    public SurveyDataType SurveyType { get; set; }
+    public DetectionConfidence Confidence { get; set; } = DetectionConfidence.NotDetected;
+    public List<string> Evidence { get; set; } = new();
+}
+
 
 public sealed class GnssQualitySample
 {

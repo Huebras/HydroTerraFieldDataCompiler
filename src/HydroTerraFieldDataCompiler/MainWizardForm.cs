@@ -385,11 +385,7 @@ public sealed class MainWizardForm : Form
             if (result.DetectedPositioningMethod != PositioningMethod.Unknown && !_project.PositioningMethods.Contains(result.DetectedPositioningMethod))
                 _project.PositioningMethods.Add(result.DetectedPositioningMethod);
             ApplyDetectedGeodesy(result.GeodesyEvidence);
-            _project.DetectedDataTypes = result.Files.SelectMany(f => f.SuggestedDataTypes).Distinct().ToList();
-            if (!_project.DataTypesManuallyConfirmed)
-            {
-                _project.DataTypes = _project.DetectedDataTypes.ToList();
-            }
+            SurveyDetectionEngine.Apply(_project);
             MergeSurveyLines(result.Files);
             RunLineCoverageAnalysis(false);
             _project.MagnetometerQaResults = MagnetometerQaAnalyzer.Analyze(_project);
@@ -540,8 +536,11 @@ public sealed class MainWizardForm : Form
                 Margin = new Padding(3, 4, 3, 4)
             };
             checks[type] = check;
-            string detection = _project.DetectedDataTypes.Contains(type) ? "Detected from imported data" : "Not automatically detected";
-            var source = new Label { Text = detection, AutoSize = true, ForeColor = _project.DetectedDataTypes.Contains(type) ? Color.DarkGreen : SystemColors.GrayText, Margin = new Padding(3, 6, 3, 4) };
+            SurveyTypeDetection? detectionResult = _project.SurveyTypeDetections.FirstOrDefault(x => x.SurveyType == type);
+            string detection = detectionResult == null
+                ? "Not automatically detected"
+                : $"{detectionResult.Confidence}: {string.Join("; ", detectionResult.Evidence)}";
+            var source = new Label { Text = detection, AutoSize = true, MaximumSize = new Size(700, 0), ForeColor = detectionResult != null ? Color.DarkGreen : SystemColors.GrayText, Margin = new Padding(3, 6, 3, 4) };
             choices.Controls.Add(check, 0, row);
             choices.Controls.Add(source, 1, row);
             row++;

@@ -113,6 +113,12 @@ public static class WordReportGenerator
         }
         b.Append(Table(new[] { "ID", "Device", "Type", "Recorded S/F/V", "Approved S/F/V", "Reason" }, deviceRows.ToArray(), 6));
 
+        b.Append(Paragraph("Detected Equipment and Survey-Type Evidence", "Heading1"));
+        var equipmentRows = new List<string>();
+        foreach (EquipmentDetection equipment in p.DetectedEquipment)
+            equipmentRows.AddRange(new[] { equipment.DeviceId?.ToString() ?? "—", equipment.DeviceName, equipment.EquipmentType, equipment.ObservationCount.ToString("N0"), equipment.Confidence.ToString(), string.Join("; ", equipment.Evidence) });
+        b.Append(Table(new[] { "ID", "Device", "Equipment", "Observations", "Confidence", "Evidence" }, equipmentRows.ToArray(), 6));
+
         Section(b, "6. File Inventory and Configuration Integrity");
         var fileRows = new List<string>();
         foreach (RawFileSummary f in p.RawFileSummaries)

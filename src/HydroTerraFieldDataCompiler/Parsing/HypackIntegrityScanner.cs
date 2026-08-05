@@ -69,6 +69,8 @@ public sealed class HypackIntegrityScanner
             bool applanixEvidence = false;
             bool vrsEvidence = false;
             int unresolvedEcRecordCount = 0;
+            var ecUsageByDevice = new Dictionary<int, DeviceDataUsage>();
+            var positionUsageByDevice = new Dictionary<int, int>();
             var rawReader = new HypackRawReader();
             string activeSurveyLine = string.Empty;
             while ((line = reader.ReadLine()) != null)
@@ -84,6 +86,7 @@ public sealed class HypackIntegrityScanner
                 else summary.RecordTypeCounts[recordType] = summary.RecordTypeCounts.TryGetValue(recordType, out int typeCount) ? typeCount + 1 : 1;
                 if (parsedRecord is PositionHypackRecord posRecord)
                 {
+                    if (posRecord.DeviceId.HasValue) positionUsageByDevice[posRecord.DeviceId.Value] = positionUsageByDevice.GetValueOrDefault(posRecord.DeviceId.Value) + 1;
                     summary.NavigationStartSeconds = !summary.NavigationStartSeconds.HasValue || posRecord.SecondsOfDay < summary.NavigationStartSeconds ? posRecord.SecondsOfDay : summary.NavigationStartSeconds;
                     summary.NavigationEndSeconds = !summary.NavigationEndSeconds.HasValue || posRecord.SecondsOfDay > summary.NavigationEndSeconds ? posRecord.SecondsOfDay : summary.NavigationEndSeconds;
                     if (posRecord.X.HasValue)
@@ -102,17 +105,33 @@ public sealed class HypackIntegrityScanner
                     DeviceConfiguration? sourceDevice = ecRecord.DeviceId.HasValue && devicesById.TryGetValue(ecRecord.DeviceId.Value, out DeviceConfiguration? mappedDevice)
                         ? mappedDevice
                         : null;
+                    int usageId = ecRecord.DeviceId ?? -1;
+                    if (!ecUsageByDevice.TryGetValue(usageId, out DeviceDataUsage? usage))
+                    {
+                        usage = new DeviceDataUsage
+                        {
+                            DeviceId = ecRecord.DeviceId,
+                            DeviceName = sourceDevice?.DeviceName ?? $"Device {usageId}",
+                            EquipmentType = IsMagnetometerDevice(sourceDevice) ? "Magnetometer" : IsSingleBeamDevice(sourceDevice) ? "Single Beam" : "Unresolved",
+                            SourceFile = displayName
+                        };
+                        ecUsageByDevice[usageId] = usage;
+                    }
+                    usage.EcRecordCount++;
 
                     if (IsMagnetometerDevice(sourceDevice))
                     {
                         Add(summary.SuggestedDataTypes, SurveyDataType.Magnetometer);
+                        if (ecRecord.Depth1.HasValue) usage.MagnetometerValueCount++;
+                        if (ecRecord.Depth2.HasValue) usage.MagnetometerValueCount++;
                     }
                     else if (IsSingleBeamDevice(sourceDevice))
                     {
                         Add(summary.SuggestedDataTypes, SurveyDataType.SingleBeamFrequencyUnknown);
                         summary.EchosounderRecordCount++;
-                        if (IsUsableDepth(ecRecord.Depth1)) summary.HighFrequencyDepthCount++;
-                        if (IsUsableDepth(ecRecord.Depth2)) summary.LowFrequencyDepthCount++;
+                        // Operational rule: for a fathometer, EC Depth1 is high frequency and Depth2 is low frequency.
+                        if (IsUsableDepth(ecRecord.Depth1)) { summary.HighFrequencyDepthCount++; usage.HighFrequencyValueCount++; }
+                        if (IsUsableDepth(ecRecord.Depth2)) { summary.LowFrequencyDepthCount++; usage.LowFrequencyValueCount++; }
                         summary.EchosounderStartSeconds = !summary.EchosounderStartSeconds.HasValue || ecRecord.SecondsOfDay < summary.EchosounderStartSeconds ? ecRecord.SecondsOfDay : summary.EchosounderStartSeconds;
                         summary.EchosounderEndSeconds = !summary.EchosounderEndSeconds.HasValue || ecRecord.SecondsOfDay > summary.EchosounderEndSeconds ? ecRecord.SecondsOfDay : summary.EchosounderEndSeconds;
                     }
@@ -224,6 +243,21 @@ public sealed class HypackIntegrityScanner
                 result.Findings.Add(Finding("OFF000", "Info", "Offsets",
                     $"Detected recorded offsets for {offsetDevices.Count} devices.",
                     string.Join(" | ", offsetDevices.Select(d => $"ID {d.DeviceId} {d.DeviceName}: Stbd {d.RecordedStarboard}, Fwd {d.RecordedForward}, Vert {d.RecordedVertical}")), displayName));
+
+            foreach (var usage in ecUsageByDevice.Values)
+            {
+                if (usage.DeviceId.HasValue) usage.PositionRecordCount = positionUsageByDevice.GetValueOrDefault(usage.DeviceId.Value);
+                summary.DeviceDataUsage.Add(usage);
+            }
+            foreach (var pair in positionUsageByDevice.Where(x => !ecUsageByDevice.ContainsKey(x.Key)))
+            {
+                devicesById.TryGetValue(pair.Key, out DeviceConfiguration? positionDevice);
+                summary.DeviceDataUsage.Add(new DeviceDataUsage
+                {
+                    DeviceId = pair.Key, DeviceName = positionDevice?.DeviceName ?? $"Device {pair.Key}",
+                    EquipmentType = positionDevice?.DeviceType ?? "Positioning", PositionRecordCount = pair.Value, SourceFile = displayName
+                });
+            }
 
             DetectSingleBeamFrequencyMode(summary);
             if (unresolvedEcRecordCount > 0)
@@ -699,7 +733,7 @@ public sealed class HypackIntegrityScanner
     }
 
     private static bool IsNavigationRecord(string type, string line) => type.Equals("POS", StringComparison.OrdinalIgnoreCase) || type.Equals("GPS", StringComparison.OrdinalIgnoreCase) || type.Equals("RAW", StringComparison.OrdinalIgnoreCase) || line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("EASTING", StringComparison.OrdinalIgnoreCase) || line.Contains("NORTHING", StringComparison.OrdinalIgnoreCase);
-    private static void DetectDataTypes(string line, List<SurveyDataType> types) { AddIf(line, types, SurveyDataType.SingleBeamFrequencyUnknown, "SINGLE BEAM", "ECHOSOUNDER", "SBES", "DBT"); AddIf(line, types, SurveyDataType.Multibeam, "MULTIBEAM", "MBES", "SONAR", "SEABAT", "EM2040", "NORBIT"); AddIf(line, types, SurveyDataType.SideScan, "SIDE SCAN", "SIDESCAN", "EDGETECH", "KLEIN"); AddIf(line, types, SurveyDataType.Magnetometer, "MAGNETOMETER", "MAG ", "G-882", "G882", "MARINE MAG"); AddIf(line, types, SurveyDataType.SubBottom, "SUBBOTTOM", "SUB-BOTTOM", "CHIRP"); AddIf(line, types, SurveyDataType.Adcp, "ADCP"); AddIf(line, types, SurveyDataType.SoundVelocity, "SVP", "SOUND VELOCITY", "SVC"); AddIf(line, types, SurveyDataType.TideOrWaterLevel, "TIDE", "WATER LEVEL"); AddIf(line, types, SurveyDataType.TowfishPositioning, "TOWFISH", "LAYBACK", "CABLE OUT"); if (line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase)) Add(types, SurveyDataType.NavigationOnly); }
+    private static void DetectDataTypes(string line, List<SurveyDataType> types) { AddIf(line, types, SurveyDataType.Multibeam, "MULTIBEAM", "MBES", "SEABAT", "EM2040", "NORBIT", "RMB "); AddIf(line, types, SurveyDataType.SideScan, "SIDE SCAN", "SIDESCAN", "EDGETECH", "KLEIN", "STARFISH", "RSS "); AddIf(line, types, SurveyDataType.SubBottom, "SUBBOTTOM", "SUB-BOTTOM", "CHIRP"); AddIf(line, types, SurveyDataType.Adcp, "ADCP"); AddIf(line, types, SurveyDataType.SoundVelocity, "SVP", "SOUND VELOCITY", "SVC"); AddIf(line, types, SurveyDataType.TideOrWaterLevel, "TIDE", "WATER LEVEL"); AddIf(line, types, SurveyDataType.TowfishPositioning, "TOWFISH", "LAYBACK", "CABLE OUT"); if (line.Contains("$GPGGA", StringComparison.OrdinalIgnoreCase) || line.Contains("$GNGGA", StringComparison.OrdinalIgnoreCase)) Add(types, SurveyDataType.NavigationOnly); }
     private static void AddIf(string line, List<SurveyDataType> types, SurveyDataType type, params string[] terms) { if (terms.Any(t => line.Contains(t, StringComparison.OrdinalIgnoreCase))) Add(types, type); }
     private static void Add(List<SurveyDataType> types, SurveyDataType type) { if (!types.Contains(type)) types.Add(type); }
     private static void DetectSurveyLine(string line, Dictionary<string, int> counts) { Match match = LineRegex.Match(line); if (!match.Success) return; string name = match.Groups["name"].Value.Trim(); if (name.Length == 0 || name.Length > 40) return; counts[name] = counts.TryGetValue(name, out int value) ? value + 1 : 1; }
