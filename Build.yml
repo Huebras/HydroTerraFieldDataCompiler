@@ -1,0 +1,36 @@
+name: Build HydroTerra Field Data Compiler
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore NuGet packages
+      run: dotnet restore HydroTerraFieldDataCompiler.sln
+
+    - name: Build Release
+      run: dotnet build HydroTerraFieldDataCompiler.sln --configuration Release --no-restore
+
+    - name: Publish Release
+      run: dotnet publish HydroTerraFieldDataCompiler.sln --configuration Release --output publish
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: HydroTerraFieldDataCompiler
+        path: publish/
