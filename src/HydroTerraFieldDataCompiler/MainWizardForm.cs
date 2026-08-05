@@ -439,18 +439,7 @@ public sealed class MainWizardForm : Form
         void RefreshRules()
         {
             selectionState.Text = "Rule source: Confirmed Step 4 selections";
-            bool single = SurveyRequirements.HasSingleBeam(_project);
-            bool mag = SurveyRequirements.HasMagnetometer(_project);
-            var active = new List<string>
-            {
-                $"Survey types: {SurveyRequirements.SurveyTypeSummary(_project)}",
-                $"BIN pairing: {(single ? "Active" : "Not applicable")}",
-                $"Bar check review: {(single ? "Active (file or documented exception)" : "Not applicable")}",
-                $"SVP / .VEL review: {(single ? "Active (file or documented exception)" : "Not applicable")}",
-                $"Single-beam depth QA: {(single ? "Active" : "Not applicable")}",
-                $"Magnetometer checks: {(mag ? "Active" : "Not applicable")}"
-            };
-            rulesText.Text = string.Join(Environment.NewLine, active);
+            rulesText.Text = string.Join(Environment.NewLine, SurveyRequirements.DescribeActiveRules(_project));
         }
 
         foreach (var pair in checks)

@@ -1,0 +1,8 @@
+Requirements Engine update
+
+- Confirmed Step 4 selections are the sole source of rule applicability.
+- Central profiles now define required, recommended, exception-capable, and not-applicable rules.
+- Single beam activates BIN pairing, depth QA, bar-check review, and sound-velocity review.
+- Magnetometer activates magnetometer QA and towfish-position review without BIN/bar-check/SVP requirements.
+- Side scan and multibeam profiles are defined for future QA implementation.
+- Step 4 Active Rules, Package Review, Project Health compatibility methods, and Word report use the same engine.

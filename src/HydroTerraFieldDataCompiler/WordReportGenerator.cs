@@ -79,6 +79,8 @@ public static class WordReportGenerator
             "Approved positioning method(s)", p.PositioningMethods.Count == 0 ? "Not confirmed" : string.Join(", ", p.PositioningMethods.Select(x => Friendly(x.ToString())))
         }, 2));
         if (p.PositioningEvidence.Count > 0) b.Append(Bullets(p.PositioningEvidence.Take(12)));
+        b.Append(Paragraph("Active survey requirements", "Heading1"));
+        b.Append(Bullets(SurveyRequirements.DescribeActiveRules(p)));
 
         Section(b, "4. Geodesy");
         GeodesyConfiguration g = p.Geodesy;

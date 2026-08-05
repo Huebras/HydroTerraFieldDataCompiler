@@ -56,12 +56,11 @@ public static class PackageReviewBuilder
             items.Add(Create($"support|{file.Path}", file.Category, file.Path, rel, required, file.Description));
         }
 
-        bool singleBeam = SurveyRequirements.HasSingleBeam(project);
-        if (singleBeam)
-        {
-            AddMissingCategoryIfNeeded("Bar Check / Echosounder Calibration", "required|bar-check", project.BarCheckExceptionReason, "Attach the ECHOTRAC DSO bar-check file or enter a documented exception on Step 9.");
-            AddMissingCategoryIfNeeded("SVP / Sound Velocity", "required|svp", project.SvpExceptionReason, "Attach the applicable sound-velocity cast or enter a documented exception on Step 9.");
-        }
+        ActiveSurveyRequirements activeRequirements = SurveyRequirements.GetActive(project);
+        if (activeRequirements.Applies(SurveyRequirements.BarCheck))
+            AddMissingCategoryIfNeeded("Bar Check / Echosounder Calibration", "required|bar-check", project.BarCheckExceptionReason, "Attach the applicable DSO bar-check file or enter a documented exception on Step 9.");
+        if (activeRequirements.Applies(SurveyRequirements.SoundVelocity))
+            AddMissingCategoryIfNeeded("SVP / Sound Velocity", "required|svp", project.SvpExceptionReason, "Attach the applicable .VEL/.SVP file or enter a documented exception on Step 9.");
 
         void AddMissingCategoryIfNeeded(string category, string key, string exceptionReason, string details)
         {
@@ -154,10 +153,12 @@ public static class PackageReviewBuilder
 
     private static bool IsRequiredSupportingFile(FieldDataProject project, string category)
     {
-        bool singleBeam = SurveyRequirements.HasSingleBeam(project);
-        if (!singleBeam) return false;
-        return category.Equals("Bar Check / Echosounder Calibration", StringComparison.OrdinalIgnoreCase)
-            || category.Equals("SVP / Sound Velocity", StringComparison.OrdinalIgnoreCase);
+        ActiveSurveyRequirements active = SurveyRequirements.GetActive(project);
+        if (category.Equals("Bar Check / Echosounder Calibration", StringComparison.OrdinalIgnoreCase))
+            return active.Applies(SurveyRequirements.BarCheck);
+        if (category.Equals("SVP / Sound Velocity", StringComparison.OrdinalIgnoreCase))
+            return active.Applies(SurveyRequirements.SoundVelocity);
+        return false;
     }
 
 
