@@ -136,19 +136,132 @@ public sealed class MainWizardForm : Form
     }
 
     private Control BuildProjectSetupPage()
+{
+    var scrollHost = new Panel
     {
-        var panel = new Panel { AutoScroll = true }; int y = 25;
-        AddTextField(panel, "Project Name", _project.ProjectName, y, v => _project.ProjectName = v); y += 48;
-        AddTextField(panel, "Project Number", _project.ProjectNumber, y, v => _project.ProjectNumber = v); y += 48;
-        AddTextField(panel, "Client", _project.Client, y, v => _project.Client = v); y += 48;
-        AddTextField(panel, "Location", _project.Location, y, v => _project.Location = v); y += 48;
-        AddTextField(panel, "Vessel", _project.Vessel, y, v => _project.Vessel = v); y += 48;
-        AddTextField(panel, "Field Crew", _project.FieldCrew, y, v => _project.FieldCrew = v); y += 48;
-        AddDateField(panel, "Survey Start", _project.SurveyStartDate, y, v => _project.SurveyStartDate = v); y += 48;
-        AddDateField(panel, "Survey End", _project.SurveyEndDate, y, v => _project.SurveyEndDate = v); y += 48;
-        AddTextField(panel, "Notes", _project.Notes, y, v => _project.Notes = v, true);
-        return panel;
+        Dock = DockStyle.Fill,
+        AutoScroll = true,
+        Padding = new Padding(24)
+    };
+
+    var form = new TableLayoutPanel
+    {
+        AutoSize = true,
+        AutoSizeMode = AutoSizeMode.GrowAndShrink,
+        Dock = DockStyle.Top,
+        ColumnCount = 2,
+        RowCount = 0,
+        Margin = Padding.Empty,
+        Padding = Padding.Empty
+    };
+
+    form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+    form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+    void AddTextRow(
+        string labelText,
+        string initialValue,
+        Action<string> setter,
+        bool multiline = false)
+    {
+        int row = form.RowCount++;
+        form.RowStyles.Add(new RowStyle(
+            SizeType.Absolute,
+            multiline ? 105F : 42F));
+
+        var label = new Label
+        {
+            Text = labelText,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 3, 12, 3),
+            AutoEllipsis = true
+        };
+
+        var textBox = new TextBox
+        {
+            Text = initialValue ?? string.Empty,
+            Dock = DockStyle.Fill,
+            Multiline = multiline,
+            WordWrap = true,
+            ScrollBars = multiline
+                ? ScrollBars.Vertical
+                : ScrollBars.None,
+            Margin = new Padding(0, 6, 8, 6)
+        };
+
+        textBox.TextChanged += (_, _) => setter(textBox.Text);
+
+        form.Controls.Add(label, 0, row);
+        form.Controls.Add(textBox, 1, row);
     }
+
+    void AddDateRow(
+        string labelText,
+        DateTime? value,
+        Action<DateTime?> setter)
+    {
+        int row = form.RowCount++;
+        form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+
+        var label = new Label
+        {
+            Text = labelText,
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 3, 12, 3),
+            AutoEllipsis = true
+        };
+
+        var picker = new DateTimePicker
+        {
+            Format = DateTimePickerFormat.Short,
+            ShowCheckBox = true,
+            Checked = value.HasValue,
+            Value = value ?? DateTime.Today,
+            Width = 220,
+            Anchor = AnchorStyles.Left,
+            Margin = new Padding(0, 6, 8, 6)
+        };
+
+        picker.ValueChanged += (_, _) =>
+            setter(picker.Checked ? picker.Value.Date : null);
+
+        form.Controls.Add(label, 0, row);
+        form.Controls.Add(picker, 1, row);
+    }
+
+    AddTextRow("Project Name", _project.ProjectName,
+        value => _project.ProjectName = value);
+
+    AddTextRow("Project Number", _project.ProjectNumber,
+        value => _project.ProjectNumber = value);
+
+    AddTextRow("Client", _project.Client,
+        value => _project.Client = value);
+
+    AddTextRow("Location", _project.Location,
+        value => _project.Location = value);
+
+    AddTextRow("Vessel", _project.Vessel,
+        value => _project.Vessel = value);
+
+    AddTextRow("Field Crew", _project.FieldCrew,
+        value => _project.FieldCrew = value);
+
+    AddDateRow("Survey Start", _project.SurveyStartDate,
+        value => _project.SurveyStartDate = value);
+
+    AddDateRow("Survey End", _project.SurveyEndDate,
+        value => _project.SurveyEndDate = value);
+
+    AddTextRow("Notes", _project.Notes,
+        value => _project.Notes = value,
+        multiline: true);
+
+    scrollHost.Controls.Add(form);
+    return scrollHost;
+}
 
     private Control BuildImportPage()
     {
