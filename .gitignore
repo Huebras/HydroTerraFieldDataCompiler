@@ -1,0 +1,24 @@
+# Visual Studio
+.vs/
+
+# Build output
+bin/
+obj/
+
+# User files
+*.user
+*.suo
+
+# Build artifacts
+*.exe
+*.dll
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# Publish output
+publish/
+
+# Windows
+Thumbs.db
+Desktop.ini

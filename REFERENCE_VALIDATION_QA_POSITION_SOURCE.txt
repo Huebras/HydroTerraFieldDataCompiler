@@ -1,0 +1,8 @@
+VERSION 0.31 - QA POSITION SOURCE
+
+- Survey Lines now lists every device ID that actually contains POS records.
+- User selection controls offline-distance, coverage-gap, plan-view, and gap-DXF calculations.
+- Magnetometer/side-scan/towfish workflows prefer a towfish position source automatically.
+- Single-beam and other vessel-mounted workflows prefer the primary GPS/GNSS source.
+- GNSS QUA statistics continue to use the primary GNSS quality device independently.
+- Selected source is stored in the project and included in line tables, CSV exports, and the Word report.

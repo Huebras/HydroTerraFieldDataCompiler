@@ -1,0 +1,20 @@
+RTK Tide Export Validation
+
+Reference dataset: 080426 Dredge Area Hydros.zip
+Observed positioning device: DEV 0 GPS NMEA-0183
+Recorded vertical offset: OFF 0 ... -7.300 ...
+Observed relationship: TID = -(POS vertical + recorded vertical offset)
+Matched TID/POS epochs: 6,430 of 6,430 compared (100.0%)
+TID records present: 6,464
+Default verification tolerance: 0.015 source units
+Required verification ratio: 95%
+
+Example:
+POS vertical = 187.918
+Recorded vertical offset = -7.300
+Expected TID = -(187.918 + -7.300) = -180.618
+Recorded TID = -180.618
+
+For an approved vertical offset of -7.100:
+Delta = -7.100 - -7.300 = +0.200
+New TID = old TID - delta = -180.818

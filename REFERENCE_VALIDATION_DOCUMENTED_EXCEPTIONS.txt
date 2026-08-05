@@ -1,0 +1,6 @@
+v0.27.3 documented exception workflow
+- Bar check and SVP requirements apply only when a single-beam survey type is selected.
+- Magnetometer-only and other non-single-beam projects do not receive these requirements.
+- Missing single-beam bar-check or SVP files require a written reason on Step 9.
+- A completed reason changes the package item to Documented exception (warning) and permits report/package export.
+- Reasons are included in the Word report and package README.

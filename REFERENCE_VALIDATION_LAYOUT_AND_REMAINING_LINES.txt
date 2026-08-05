@@ -1,0 +1,10 @@
+HydroTerra Field Data Compiler v0.32
+
+Changes:
+- Global wizard shell uses AutoSize header/footer rows so DPI/font scaling cannot overlap page content.
+- Step 8 includes selectable criteria for defining remaining/unsurveyed portions.
+- Position coverage can optionally exclude positions outside the offline tolerance.
+- RTK fixed threshold, navigation integrity, and depth QA can optionally cause a complete planned line to be included in the remaining-lines output.
+- Remaining intervals are merged before display and export.
+- DXF and HYPACK LNW exports use the same selected criteria and user-entered overlap.
+- LNW output uses LIN/PTS/LBP/LNN/EOL blocks and creates a companion CSV.

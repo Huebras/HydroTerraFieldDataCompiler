@@ -1,0 +1,8 @@
+HydroTerra Field Data Compiler v0.30.1
+Global layout correction
+
+- Replaced absolute main-window positioning with a three-row docked shell.
+- Reserved independent space for the application header, wizard content, and navigation footer.
+- Prevents DPI/font scaling from pushing page titles into content or page content behind bottom buttons.
+- Applies to every wizard page, including Finalize Project.
+- The Finalize Project page retains its own scrollable body and persistent action bar inside the reserved content region.

@@ -1,0 +1,2 @@
+Version 0.26.1
+Corrected Finalize Project readiness property references and HealthStatus comparisons.

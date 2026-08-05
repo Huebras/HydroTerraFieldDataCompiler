@@ -1,0 +1,3 @@
+HydroTerra Field Data Compiler v0.26
+
+Wizard contains nine steps. Step 9 consolidates supporting-file upload, project readiness, reviewer approval, report generation, package compilation, and output-folder access. Bar-check and SVP files are uploaded on Step 9.

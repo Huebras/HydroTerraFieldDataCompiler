@@ -1,0 +1,15 @@
+HydroTerra Field Data Compiler v0.30 - HYPACK LOG import
+
+Step 2 now accepts .RAW, .LOG, and .ZIP files.
+
+Implemented behavior:
+- Multiple HYPACK LOG files may be loaded.
+- LOG files are parsed as survey organization sources, not sensor observations.
+- RAW references are extracted in their listed order.
+- Referenced RAW files are compared to the loaded/scanned RAW inventory.
+- Missing referenced RAW files create warnings.
+- Loaded RAW files not listed in a LOG are reported informationally.
+- The RAW inventory is ordered by the first available LOG ordering where possible.
+- LOG reconciliation appears on the Import page and in the Word report.
+- Original LOG files are included under 01_Original_Data/HYPACK_LOG in compiled packages.
+- RAW files remain the source of truth for positions, depths, devices, quality, offsets, and line geometry.

@@ -1,0 +1,7 @@
+Version 0.22 rule-explanation validation
+
+- Survey Lines now includes a Warnings column with concise reasons.
+- Selecting a line displays a Rule Inspector for coverage, offline tolerance, positioning, depth, and configuration.
+- Missing QUA data is reported as NOT EVALUATED / Information rather than automatically warning the line.
+- Non-fixed observations do not automatically warn a line when the configured fixed-percentage threshold is still satisfied.
+- Yellow row highlighting now corresponds to the explicit warning summary shown in the row.

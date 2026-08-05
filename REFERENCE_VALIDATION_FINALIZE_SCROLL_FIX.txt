@@ -1,0 +1,6 @@
+Version 0.27.2 Finalize Project layout correction
+- Step 9 content is hosted in a vertically scrollable panel.
+- Final actions remain visible in a persistent bottom action bar.
+- Added Refresh Readiness and Finish buttons.
+- Supporting file changes refresh readiness and package preview automatically.
+- Supporting and package-preview grids have minimum visible heights.

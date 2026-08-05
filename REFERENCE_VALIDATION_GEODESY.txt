@@ -1,0 +1,32 @@
+Geodesy reference validation for v0.14
+
+050526PL MAG.zip
+- Grid: State Plane NAD-83
+- Horizontal datum: NAD83
+- Projection: Lambert Conformal Conic
+- Zone: LA-1702 LOUISIANA SOUTH
+- Zone ID: 1186
+- Units: U.S. survey feet
+- Unit factor: 0.304800609600 m
+- Ellipsoid: WGS-84
+- Geoid: g2012b-CONUS.geo
+- Central meridian: -91.3333333333
+- Reference latitude: 28.5000000000
+- POS range is plausible for State Plane coordinates in U.S. survey feet.
+
+080426 Dredge Area Hydros.zip
+- Grid: State Plane NAD-83
+- Horizontal datum: NAD83
+- Projection: Lambert Conformal Conic
+- Zone: AR-0301 ARKANSAS NORTH
+- Zone ID: 1148
+- Units: U.S. survey feet
+- Unit factor: 0.304800609600 m
+- Ellipsoid: WGS-84
+- Geoid: g2018-CONUS.geo
+- Central meridian: -92.0000000000
+- Reference latitude: 34.3333333333
+- POS range is plausible for State Plane coordinates in U.S. survey feet.
+
+Important distinction:
+The HYPACK Ellipsoid=WGS-84 field defines the ellipsoid used by the projection. It does not override Grid=State Plane NAD-83 as the horizontal datum/grid definition.

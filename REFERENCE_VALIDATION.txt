@@ -1,0 +1,14 @@
+Reference dataset: 050526PL MAG.zip
+RAW files inspected: 25
+Header devices:
+  ID 0, interface 388, GPS NMEA-0183
+  ID 1, interface 33297, Magnetometer Interface
+  ID 2, interface 40996, Towfish
+Recorded offsets:
+  ID 0: starboard -6.400, forward 0.000, vertical -6.562
+  ID 1: starboard 0.000, forward 0.000, vertical 0.000
+  ID 2: starboard 0.000, forward 0.000, vertical 0.000
+QUA records: 12,864
+Observed QUA solution code: 7
+INI RTKMode: 4 in all 25 files
+Expected interpretation in v0.11: RTK fixed

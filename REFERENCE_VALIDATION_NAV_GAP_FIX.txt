@@ -1,0 +1,16 @@
+Navigation integrity gap correction validated against 080426 Dredge Area Hydros.zip.
+
+Previous rule:
+  gap > 1.5 x median POS interval
+
+Problem:
+  Median interval was approximately 0.10 seconds, so ordinary 0.20-0.80 second
+  HYPACK record spacing was incorrectly counted as missing navigation. This caused
+  29 of 30 RAW files to receive the maximum 30-point gap penalty and score 70%.
+
+Corrected rule:
+  gap > max(1.0 second, 5 x median POS interval)
+
+Reference dataset:
+  Maximum observed within-segment interval was approximately 0.80 seconds.
+  These intervals are now treated as normal logging jitter rather than dropouts.

@@ -1,0 +1,7 @@
+HydroTerra Field Data Compiler v0.27
+
+Finalize Project enhancements:
+- Explicit readiness rows for survey data, geodesy, devices/offsets, survey lines, navigation integrity, supporting files, and approval.
+- Double-click a readiness row to jump to the relevant wizard step.
+- Package preview with required/optional inclusion controls, destinations, known size, and blocking status.
+- Latest output area with package ZIP, Word report, ZIP SHA-256, open-folder/report, and copy-path/checksum actions.

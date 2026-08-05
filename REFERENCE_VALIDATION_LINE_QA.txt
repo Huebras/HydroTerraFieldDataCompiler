@@ -1,0 +1,10 @@
+HydroTerra Field Data Compiler v0.21 - reference validation
+
+Reference dataset: 080426 Dredge Area Hydros.zip
+- Repeated RAW segments continue to merge by normalized line name and matching planned geometry.
+- EC2 fields 3 and 4 are retained as the two single-beam depth channels used by the existing detector.
+- The reference package contains valid values in both EC2 channels for the surveyed lines and therefore remains a Dual Frequency detection case.
+- QUA records use solution code 7 together with INI RTKMode=4; the line analyzer applies the same contextual RTK-fixed interpretation already used by the file scanner.
+- New line QA thresholds default to 95 percent RTK fixed and 2.0 feet for abrupt depth changes.
+
+Final C# compilation must be performed by build_windows.bat on a Windows computer with the .NET 8 SDK installed.

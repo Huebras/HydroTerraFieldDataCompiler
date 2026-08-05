@@ -1,0 +1,10 @@
+HydroTerra Field Data Compiler v0.28 - Survey-Type Requirements
+
+Validated logic:
+- Single-beam detection can come from the confirmed data types, decoded EC2 records, or suggested single-beam data types.
+- BIN pairing is evaluated only for RAW files containing single-beam echosounder records.
+- Bar-check and sound-velocity documentation are reviewed only when single-beam data are present.
+- HYPACK .VEL files satisfy the sound-velocity supporting-file check.
+- Magnetometer-only projects do not receive BIN, bar-check, or SVP requirements and are not blocked by their absence.
+- Mixed single-beam and magnetometer projects retain the single-beam requirements for the hydrographic portion only.
+- Finalize Project displays the active applicability rule and hides the bar-check/SVP exception fields when they do not apply.

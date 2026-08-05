@@ -1,0 +1,2 @@
+Reference dataset: 080426 Dredge Area Hydros.zip
+Expected: 30 RAW files, matching BIN files, Teledyne ECHOTRAC E20, EC2/TID/PRD/FIX records, Arkansas North State Plane geodesy, QUA code 7 + INI RTKMode=4.

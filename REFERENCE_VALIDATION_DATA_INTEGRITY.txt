@@ -1,0 +1,12 @@
+HydroTerra Field Data Compiler v0.25 Data Integrity
+
+Per merged planned line, the application now evaluates:
+- typical and maximum position interval
+- navigation gaps and estimated missing epochs
+- average and maximum vessel speed
+- speed spikes / impossible jumps
+- duplicate timestamps and time reversals
+- duplicate positions and position-freeze runs
+- weighted navigation-integrity score
+
+Repeated RAW segments are evaluated independently for timing continuity, then summarized under the merged planned line so legitimate restarts do not create false gap warnings.

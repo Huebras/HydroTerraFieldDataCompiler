@@ -1,0 +1,28 @@
+HydroTerra Field Data Compiler v0.24 package/report validation
+
+Package Review
+- Lists original source data, edited RAW export, supporting files, QA exports, and Word report.
+- Required items cannot be unchecked.
+- Optional items can be included or excluded.
+- Missing required items are highlighted and block package compilation.
+
+Word Field-Data Report
+- Project and survey information
+- Survey types and positioning
+- Geodesy
+- Devices and recorded/approved offsets
+- File inventory and header consistency
+- Survey-line QA
+- Project Health findings
+- Supporting-file inventory
+- Offset correction history and edited RAW notes
+- Operator review and sign-off
+
+Compiled ZIP structure
+01_Original_Data
+02_Edited_RAW (when approved offsets differ and item is included)
+03_Supporting_Files
+04_QA_Exports
+05_Reports/Field_Data_Report.docx
+Package_Manifest.csv
+README.txt

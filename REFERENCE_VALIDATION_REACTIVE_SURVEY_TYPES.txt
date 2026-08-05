@@ -1,0 +1,12 @@
+HydroTerra Field Data Compiler v0.29 - Reactive Survey-Type Rules
+
+Implemented behavior:
+1. Scanner stores automatically detected survey types separately from confirmed selections.
+2. Before manual confirmation, detected types preselect Step 4.
+3. After any Step 4 change, manual selections remain authoritative on future scans.
+4. SurveyRequirements reads confirmed Step 4 selections only.
+5. Step 4 changes immediately recalculate line coverage/depth QA and Project Health.
+6. Active-rule summary updates immediately for BIN, bar check, SVP/.VEL, single-beam depth QA, and magnetometer applicability.
+7. Existing projects remain compatible because the new project properties have safe defaults.
+
+Final .NET 8 Windows compilation must be performed with build_windows.bat on Windows.
