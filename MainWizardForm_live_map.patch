@@ -1,0 +1,70 @@
+--- htfdc_orig32/HydroTerraFieldDataCompiler_Simple_v0.32/src/HydroTerraFieldDataCompiler/MainWizardForm.cs	2026-08-05 13:23:09.000000000 +0000
++++ htfdc_mapfix/HydroTerraFieldDataCompiler_Simple_v0.32/src/HydroTerraFieldDataCompiler/MainWizardForm.cs	2026-08-05 15:00:10.435781844 +0000
+@@ -18,6 +18,7 @@
+     private string _lastPackageZipPath = string.Empty;
+     private string _lastReportPath = string.Empty;
+     private string _lastPackageSha256 = string.Empty;
++    private PlanViewForm? _planView;
+ 
+     private readonly string[] _steps =
+     {
+@@ -1243,11 +1244,25 @@
+                 ShowStep();
+             }
+         };
+-        useCoverage.CheckedChanged += (_, _) => { _project.UsePositionCoverageForRemainingLines = useCoverage.Checked; useOffline.Enabled = useCoverage.Checked; };
+-        useOffline.CheckedChanged += (_, _) => _project.UseOfflineToleranceForCoverage = useOffline.Checked;
+-        useRtk.CheckedChanged += (_, _) => _project.UsePositionQualityForRemainingLines = useRtk.Checked;
+-        useNav.CheckedChanged += (_, _) => _project.UseNavigationIntegrityForRemainingLines = useNav.Checked;
+-        useDepth.CheckedChanged += (_, _) => _project.UseDepthQaForRemainingLines = useDepth.Checked;
++        void ApplyRemainingCriteriaAndRefresh()
++        {
++            _project.UsePositionCoverageForRemainingLines = useCoverage.Checked;
++            _project.UseOfflineToleranceForCoverage = useOffline.Checked;
++            _project.UsePositionQualityForRemainingLines = useRtk.Checked;
++            _project.UseNavigationIntegrityForRemainingLines = useNav.Checked;
++            _project.UseDepthQaForRemainingLines = useDepth.Checked;
++            useOffline.Enabled = useCoverage.Checked;
++
++            if (_project.RawFileSummaries.Count == 0) return;
++            RunLineCoverageAnalysis(false);
++            BeginInvoke(new Action(ShowStep));
++        }
++
++        useCoverage.CheckedChanged += (_, _) => ApplyRemainingCriteriaAndRefresh();
++        useOffline.CheckedChanged += (_, _) => ApplyRemainingCriteriaAndRefresh();
++        useRtk.CheckedChanged += (_, _) => ApplyRemainingCriteriaAndRefresh();
++        useNav.CheckedChanged += (_, _) => ApplyRemainingCriteriaAndRefresh();
++        useDepth.CheckedChanged += (_, _) => ApplyRemainingCriteriaAndRefresh();
+         tolerance.ValueChanged += (_, _) => _project.OfflineToleranceFeet = (double)tolerance.Value;
+         gapSize.ValueChanged += (_, _) => _project.CoverageGapFeet = (double)gapSize.Value;
+         overlap.ValueChanged += (_, _) => _project.GapExportOverlapFeet = (double)overlap.Value;
+@@ -1257,8 +1272,17 @@
+         planView.Click += (_, _) =>
+         {
+             if (_project.LineCoverageResults.Count == 0) RunLineCoverageAnalysis(false);
+-            using var view = new PlanViewForm(_project.LineCoverageResults);
+-            view.ShowDialog(this);
++            if (_planView == null || _planView.IsDisposed)
++            {
++                _planView = new PlanViewForm(_project.LineCoverageResults);
++                _planView.FormClosed += (_, _) => _planView = null;
++                _planView.Show(this);
++            }
++            else
++            {
++                _planView.UpdateResults(_project.LineCoverageResults);
++                _planView.Activate();
++            }
+         };
+         export.Click += (_, _) =>
+         {
+@@ -1288,6 +1312,8 @@
+         try
+         {
+             _project.LineCoverageResults = new LineCoverageAnalyzer().Analyze(_project);
++            if (_planView != null && !_planView.IsDisposed)
++                _planView.UpdateResults(_project.LineCoverageResults);
+             _project.Findings.RemoveAll(f => f.RuleId.StartsWith("LINE", StringComparison.OrdinalIgnoreCase));
+             foreach (var result in _project.LineCoverageResults)
+             {

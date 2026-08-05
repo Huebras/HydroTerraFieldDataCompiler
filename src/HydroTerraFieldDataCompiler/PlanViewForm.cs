@@ -42,6 +42,11 @@ public sealed class PlanViewForm : Form
         Controls.Add(toolbar);
         Shown += (_, _) => _canvas.ZoomExtents();
     }
+
+    public void UpdateResults(IEnumerable<LineCoverageResult> results, bool zoomExtents = false)
+    {
+        _canvas.UpdateResults(results.ToList(), zoomExtents);
+    }
 }
 
 internal sealed class PlanViewCanvas : Control
@@ -66,6 +71,14 @@ internal sealed class PlanViewCanvas : Control
         MouseUp += (_, _) => { _panning = false; Cursor = Cursors.Cross; };
         MouseDoubleClick += (_, _) => ZoomExtents();
         Resize += (_, _) => Invalidate();
+    }
+
+    public void UpdateResults(List<LineCoverageResult> results, bool zoomExtents = false)
+    {
+        _results.Clear();
+        _results.AddRange(results);
+        if (zoomExtents) ZoomExtents();
+        else Invalidate();
     }
 
     public void ZoomExtents()
