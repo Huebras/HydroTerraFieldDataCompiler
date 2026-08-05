@@ -153,10 +153,10 @@ public sealed class MainWizardForm : Form
     private Control BuildImportPage()
     {
         var panel = new Panel();
-        var addFiles = new Button { Text = "Add RAW / LOG / ZIP Files", Location = new Point(20, 18), Size = new Size(205, 34) };
-        var addFolder = new Button { Text = "Add Survey Folder", Location = new Point(235, 18), Size = new Size(145, 34) };
-        var scan = new Button { Text = "Run Integrity Check", Location = new Point(390, 18), Size = new Size(160, 34) };
-        var remove = new Button { Text = "Remove Selected", Location = new Point(560, 18), Size = new Size(150, 34) };
+        var addFiles = new Button { Text = "Add ZIP File...", Location = new Point(20, 18), Size = new Size(145, 34) };
+        var addFolder = new Button { Text = "Add Survey Folder...", Location = new Point(175, 18), Size = new Size(170, 34) };
+        var scan = new Button { Text = "Run Integrity Check", Location = new Point(355, 18), Size = new Size(160, 34) };
+        var remove = new Button { Text = "Remove Selected", Location = new Point(525, 18), Size = new Size(150, 34) };
         var tabs = new TabControl { Location = new Point(20, 65), Size = new Size(1085, 490), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
         var filesTab = new TabPage("Survey Data");
         var logsTab = new TabPage("HYPACK LOG");
@@ -168,7 +168,7 @@ public sealed class MainWizardForm : Form
 
         addFiles.Click += (_, _) =>
         {
-            using var d = new OpenFileDialog { Filter = "HYPACK RAW, LOG, or ZIP|*.raw;*.log;*.zip|HYPACK RAW|*.raw|HYPACK LOG|*.log|ZIP archives|*.zip|All files|*.*", Multiselect = true };
+            using var d = new OpenFileDialog { Filter = "ZIP archives|*.zip|All files|*.*", Multiselect = true };
             if (d.ShowDialog(this) == DialogResult.OK) { AddPaths(d.FileNames); ShowStep(); }
         };
         addFolder.Click += (_, _) =>
